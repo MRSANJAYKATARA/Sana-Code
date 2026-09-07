@@ -203,7 +203,7 @@ Release builds must not contain test API keys, debug provider defaults, or priva
 
 ## Distribution and Google Play
 
-Mobile Harness is currently intended for signed direct APK distribution and private testing.
+Sana Code is currently intended for signed direct APK distribution and private testing.
 
 The Play-oriented build now targets API 36, emits ARM64-only native code, supports 16 KB page alignment, uses upload-key signing, and includes the required store metadata and declaration worksheets. Submission still requires Play Console enrollment, listing declarations, reviewer access, pre-launch testing, and approval of the downloadable local-runtime architecture. A future Play edition may need to package approved runtime assets differently or move execution to a remote service.
 
@@ -211,11 +211,11 @@ Public release is also conditional on legal review and written guidance from Ant
 
 ## Project status
 
-Mobile Harness is under active development and should be treated as alpha software. Interfaces, runtime versions, provider behavior, and storage formats may change while reliability and device compatibility are validated.
+Sana Code is under active development and should be treated as alpha software. Interfaces, runtime versions, provider behavior, and storage formats may change while reliability and device compatibility are validated.
 
 ## Legal and third-party software
 
-Mobile Harness is an independent project and is not affiliated with, endorsed by, or sponsored by Anthropic.
+Sana Code is an independent project and is not affiliated with, endorsed by, or sponsored by Anthropic.
 
 Claude and Claude Code are trademarks of Anthropic. Claude Code is proprietary software, is downloaded from Anthropic rather than bundled or mirrored by this repository, and remains subject to Anthropic's terms and license. Ubuntu, Android, Kotlin, Node.js, Git, and other components belong to their respective owners.
 
@@ -223,7 +223,7 @@ Third-party notices bundled with the Android application are available in [`app/
 
 ## License
 
-Mobile Harness is available under the [MIT License](LICENSE). Third-party components remain governed by their own licenses.
+Sana Code is available under the [MIT License](LICENSE). Third-party components remain governed by their own licenses.
 
 ---
 
