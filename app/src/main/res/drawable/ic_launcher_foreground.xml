@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Code Chevrons & Inner Cyber S -->
+    <group android:pivotX="54" android:pivotY="54">
+        <!-- Left Code Chevron < -->
+        <path
+            android:fillColor="#00E5FF"
+            android:pathData="M32,38 L22,54 L32,70 L36,66 L28,54 L36,42 Z" />
+
+        <!-- Right Code Chevron > -->
+        <path
+            android:fillColor="#8B5CF6"
+            android:pathData="M76,38 L86,54 L76,70 L72,66 L80,54 L72,42 Z" />
+
+        <!-- Top Curve of S -->
+        <path
+            android:fillColor="#00E5FF"
+            android:pathData="M66,35 L44,35 C38.5,35 34,39.5 34,45 C34,50.5 38.5,54 44,54 L62,54 C66,54 69,57 69,61 C69,65 66,68 62,68 L38,68 L38,73 L62,73 C70,73 75,68 75,61 C75,54 70,49 62,49 L44,49 C41,49 39,47 39,45 C39,42 41,40 44,40 L66,40 Z" />
+
+        <!-- Center Tech Quantum Core -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M52,50 L56,50 L56,54 L52,54 Z" />
+    </group>
+</vector>
