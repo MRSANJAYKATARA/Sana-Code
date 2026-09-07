@@ -1719,6 +1719,7 @@ private fun ProviderChoiceRow(
     val accent = when (provider) {
         ProviderKind.CLAUDE -> Color(0xFFD97757)
         ProviderKind.ANTHROPIC -> Color(0xFFE7A26D)
+        ProviderKind.GEMINI -> Color(0xFF4285F4)
         ProviderKind.LLM_ROUTER -> Color(0xFF5B8DEF)
         ProviderKind.OPENAI -> Color(0xFF19A77C)
         ProviderKind.KIMI -> Color(0xFF8B7CF6)
@@ -1727,6 +1728,7 @@ private fun ProviderChoiceRow(
     val mark = when (provider) {
         ProviderKind.CLAUDE -> "C"
         ProviderKind.ANTHROPIC -> "A"
+        ProviderKind.GEMINI -> "G"
         ProviderKind.LLM_ROUTER -> "LR"
         ProviderKind.OPENAI -> "O"
         ProviderKind.KIMI -> "K"

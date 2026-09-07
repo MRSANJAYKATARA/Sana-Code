@@ -62,7 +62,77 @@ internal class NativeSpawnProcess private constructor(
     }
 }
 
-private object NativeSpawn {
+class PtyProcess(
+    val pid: Int,
+    val masterFd: Int,
+    val stdin: OutputStream,
+    val stdout: InputStream,
+) {
+    fun setWindowSize(cols: Int, rows: Int): Boolean {
+        return NativeSpawn.setPtyWindowSize(masterFd, cols, rows) == 0
+    }
+
+    fun interrupt() {
+        NativeSpawn.kill(pid, 2)
+    }
+
+    fun destroy() {
+        NativeSpawn.kill(pid, 15)
+        closeFds()
+    }
+
+    fun destroyForcibly() {
+        NativeSpawn.kill(pid, 9)
+        closeFds()
+    }
+
+    fun isAlive(): Boolean {
+        val status = NativeSpawn.waitFor(pid, true)
+        return status == NativeSpawn.STILL_RUNNING
+    }
+
+    private fun closeFds() {
+        runCatching { stdin.close() }
+        runCatching { stdout.close() }
+    }
+
+    companion object {
+        fun start(
+            argv: List<String>,
+            environment: Map<String, String>,
+            cwd: String,
+            cols: Int = 80,
+            rows: Int = 24,
+        ): PtyProcess {
+            val pty = NativeSpawn.createPty(cols, rows)
+                ?: throw IllegalStateException("Failed to allocate pseudo-terminal")
+            val masterFd = pty[0]
+            val slaveFd = pty[1]
+
+            val pid = NativeSpawn.spawnWithPty(
+                argv.toTypedArray(),
+                environment.map { "${it.key}=${it.value}" }.toTypedArray(),
+                cwd,
+                slaveFd,
+            )
+
+            runCatching {
+                ParcelFileDescriptor.adoptFd(slaveFd).close()
+            }
+
+            check(pid > 0) { "Failed to spawn process in PTY" }
+
+            val masterPfd = ParcelFileDescriptor.adoptFd(masterFd)
+            val stdin = ParcelFileDescriptor.AutoCloseOutputStream(masterPfd)
+            val dupPfd = masterPfd.dup()
+            val stdout = ParcelFileDescriptor.AutoCloseInputStream(dupPfd)
+
+            return PtyProcess(pid, masterFd, stdin, stdout)
+        }
+    }
+}
+
+internal object NativeSpawn {
     const val STILL_RUNNING = -2
 
     init {
@@ -72,4 +142,9 @@ private object NativeSpawn {
     external fun spawn(argv: Array<String>, environment: Array<String>, cwd: String, outputFile: String): IntArray
     external fun waitFor(pid: Int, noHang: Boolean): Int
     external fun kill(pid: Int, signal: Int): Int
+
+    external fun createPty(cols: Int, rows: Int): IntArray?
+    external fun setPtyWindowSize(masterFd: Int, cols: Int, rows: Int): Int
+    external fun spawnWithPty(argv: Array<String>, environment: Array<String>, cwd: String, slaveFd: Int): Int
 }
+

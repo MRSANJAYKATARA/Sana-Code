@@ -47,6 +47,14 @@ object RuntimeLaunchConfigBuilder {
                 environment["ANTHROPIC_BASE_URL"] = localGatewayUrl.trimEnd('/')
                 environment["ANTHROPIC_MODEL"] = profile.model
             }
+            com.jarves.mh.model.ProviderProtocol.GEMINI -> {
+                val targetUrl = localGatewayUrl ?: profile.baseUrl
+                environment["ANTHROPIC_BASE_URL"] = targetUrl.trimEnd('/')
+                environment["ANTHROPIC_MODEL"] = profile.model
+                if (!authToken.isNullOrBlank()) {
+                    environment["GEMINI_API_KEY"] = authToken
+                }
+            }
         }
         if (profile.kind.protocol != com.jarves.mh.model.ProviderProtocol.CLAUDE_LOGIN) {
             environment["ANTHROPIC_DEFAULT_OPUS_MODEL"] = profile.model

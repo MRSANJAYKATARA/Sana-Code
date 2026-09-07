@@ -39,6 +39,18 @@ class RuntimeLaunchConfigBuilderTest {
     }
 
     @Test
+    fun geminiConfiguresEnvironmentAndApiKey() {
+        val config = RuntimeLaunchConfigBuilder.build(
+            ProviderProfile(ProviderKind.GEMINI, model = "gemini-2.5-flash"),
+            authToken = "test-gemini-key",
+        )
+
+        assertEquals("https://generativelanguage.googleapis.com/v1beta/openai", config.environment["ANTHROPIC_BASE_URL"])
+        assertEquals("gemini-2.5-flash", config.environment["ANTHROPIC_MODEL"])
+        assertEquals("test-gemini-key", config.environment["GEMINI_API_KEY"])
+    }
+
+    @Test
     fun configuresEveryClaudeModelRoleAndInMemoryAuth() {
         val config = RuntimeLaunchConfigBuilder.build(
             ProviderProfile(ProviderKind.CUSTOM, "https://example.test/anthropic", "custom-model", true),

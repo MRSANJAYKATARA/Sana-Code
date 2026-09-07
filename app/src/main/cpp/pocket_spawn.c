@@ -7,6 +7,8 @@
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
+#include <termios.h>
 #include <unistd.h>
 
 static void close_pair(int pair[2]) { close(pair[0]); close(pair[1]); }
@@ -96,3 +98,104 @@ Java_com_jarves_mh_runtime_NativeSpawn_kill(JNIEnv *env, jobject self, jint pid,
     if (result != 0 && errno == ESRCH) result = kill(pid, signal);
     return result;
 }
+
+JNIEXPORT jintArray JNICALL
+Java_com_jarves_mh_runtime_NativeSpawn_createPty(JNIEnv *env, jobject self, jint cols, jint rows) {
+    (void)self;
+    int master_fd = posix_openpt(O_RDWR | O_NOCTTY | O_CLOEXEC);
+    if (master_fd < 0) return NULL;
+    if (grantpt(master_fd) != 0 || unlockpt(master_fd) != 0) {
+        close(master_fd);
+        return NULL;
+    }
+    char *name = ptsname(master_fd);
+    if (!name) {
+        close(master_fd);
+        return NULL;
+    }
+    int slave_fd = open(name, O_RDWR | O_NOCTTY);
+    if (slave_fd < 0) {
+        close(master_fd);
+        return NULL;
+    }
+
+    struct winsize ws;
+    memset(&ws, 0, sizeof(ws));
+    ws.ws_col = (cols > 0) ? (unsigned short)cols : 80;
+    ws.ws_row = (rows > 0) ? (unsigned short)rows : 24;
+    ioctl(master_fd, TIOCSWINSZ, &ws);
+
+    jint values[2] = {master_fd, slave_fd};
+    jintArray result = (*env)->NewIntArray(env, 2);
+    (*env)->SetIntArrayRegion(env, result, 0, 2, values);
+    return result;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_jarves_mh_runtime_NativeSpawn_setPtyWindowSize(JNIEnv *env, jobject self, jint master_fd, jint cols, jint rows) {
+    (void)env; (void)self;
+    struct winsize ws;
+    memset(&ws, 0, sizeof(ws));
+    ws.ws_col = (cols > 0) ? (unsigned short)cols : 80;
+    ws.ws_row = (rows > 0) ? (unsigned short)rows : 24;
+    return ioctl(master_fd, TIOCSWINSZ, &ws);
+}
+
+JNIEXPORT jint JNICALL
+Java_com_jarves_mh_runtime_NativeSpawn_spawnWithPty(JNIEnv *env, jobject self, jobjectArray java_argv,
+                                                    jobjectArray java_env, jstring java_cwd,
+                                                    jint slave_fd) {
+    (void)self;
+    jsize argc = (*env)->GetArrayLength(env, java_argv);
+    jsize envc = (*env)->GetArrayLength(env, java_env);
+    char **argv = calloc((size_t)argc + 1, sizeof(char *));
+    char **envp = calloc((size_t)envc + 1, sizeof(char *));
+    if (!argv || !envp) return -1;
+
+    for (jsize i = 0; i < argc; i++) {
+        jstring value = (jstring)(*env)->GetObjectArrayElement(env, java_argv, i);
+        const char *utf = (*env)->GetStringUTFChars(env, value, NULL);
+        argv[i] = strdup(utf);
+        (*env)->ReleaseStringUTFChars(env, value, utf);
+        (*env)->DeleteLocalRef(env, value);
+    }
+    for (jsize i = 0; i < envc; i++) {
+        jstring value = (jstring)(*env)->GetObjectArrayElement(env, java_env, i);
+        const char *utf = (*env)->GetStringUTFChars(env, value, NULL);
+        envp[i] = strdup(utf);
+        (*env)->ReleaseStringUTFChars(env, value, utf);
+        (*env)->DeleteLocalRef(env, value);
+    }
+    const char *cwd_utf = (*env)->GetStringUTFChars(env, java_cwd, NULL);
+    char *cwd = strdup(cwd_utf);
+    (*env)->ReleaseStringUTFChars(env, java_cwd, cwd_utf);
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        setsid();
+        ioctl(slave_fd, TIOCSCTTY, 0);
+
+        dup2(slave_fd, STDIN_FILENO);
+        dup2(slave_fd, STDOUT_FILENO);
+        dup2(slave_fd, STDERR_FILENO);
+        close(slave_fd);
+
+        chdir(cwd);
+        prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+        execve(argv[0], argv, envp);
+        _exit(127);
+    }
+
+    if (pid > 0) {
+        setpgid(pid, pid);
+    }
+
+    for (jsize i = 0; i < argc; i++) free(argv[i]);
+    for (jsize i = 0; i < envc; i++) free(envp[i]);
+    free(argv);
+    free(envp);
+    free(cwd);
+
+    return (jint)pid;
+}
+

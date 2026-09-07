@@ -6,7 +6,7 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.random.Random
 
-enum class ProviderProtocol { CLAUDE_LOGIN, ANTHROPIC, ANTHROPIC_GATEWAY, OPENAI_RESPONSES, OPENAI_CHAT }
+enum class ProviderProtocol { CLAUDE_LOGIN, ANTHROPIC, ANTHROPIC_GATEWAY, OPENAI_RESPONSES, OPENAI_CHAT, GEMINI }
 
 enum class ProviderKind(
     val title: String,
@@ -18,6 +18,7 @@ enum class ProviderKind(
 ) {
     CLAUDE("Claude subscription", "Pro, Max, Team or Enterprise", ProviderProtocol.CLAUDE_LOGIN, "", "default"),
     ANTHROPIC("Anthropic API", "Usage billed through Console", ProviderProtocol.ANTHROPIC, "https://api.anthropic.com", "claude-sonnet-4-6"),
+    GEMINI("Google Gemini", "Gemini 2.5 Flash / Pro via Google AI", ProviderProtocol.GEMINI, "https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-flash", false),
     LLM_ROUTER("LLMrouter", "Use one gateway API key", ProviderProtocol.ANTHROPIC_GATEWAY, "https://proxy.llmrouter.eu", "claude-sonnet-5"),
     OPENAI("OpenAI", "Runs through the Pocket gateway", ProviderProtocol.OPENAI_RESPONSES, "https://api.openai.com/v1", "gpt-5.4", true),
     KIMI("Kimi", "Runs through the Pocket gateway", ProviderProtocol.OPENAI_CHAT, "https://api.moonshot.ai/v1", "kimi-k2.6", true),

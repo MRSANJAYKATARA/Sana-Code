@@ -98,7 +98,7 @@ class ProviderApiClient {
         val base = baseUrl.trim().trimEnd('/')
         val withoutAnthropic = base.removeSuffix("/anthropic")
         val candidates = when (protocol) {
-            ProviderProtocol.OPENAI_CHAT, ProviderProtocol.OPENAI_RESPONSES -> listOf("$base/models")
+            ProviderProtocol.OPENAI_CHAT, ProviderProtocol.OPENAI_RESPONSES, ProviderProtocol.GEMINI -> listOf("$base/models", "$base/v1beta/models")
             else -> listOf("$base/v1/models", "$base/models", "$withoutAnthropic/models", "$withoutAnthropic/v1/models")
         }
         return candidates.distinct()
@@ -107,7 +107,7 @@ class ProviderApiClient {
     private fun messagesEndpoint(baseUrl: String, protocol: ProviderProtocol): String {
         val base = baseUrl.trim().trimEnd('/')
         return when (protocol) {
-            ProviderProtocol.OPENAI_CHAT -> "$base/chat/completions"
+            ProviderProtocol.OPENAI_CHAT, ProviderProtocol.GEMINI -> "$base/chat/completions"
             ProviderProtocol.OPENAI_RESPONSES -> "$base/responses"
             else -> "$base/v1/messages"
         }
@@ -119,7 +119,7 @@ class ProviderApiClient {
             .put("max_output_tokens", 1)
             .put("input", "Reply OK")
             .toString()
-        ProviderProtocol.OPENAI_CHAT -> JSONObject()
+        ProviderProtocol.OPENAI_CHAT, ProviderProtocol.GEMINI -> JSONObject()
             .put("model", model)
             .put("max_tokens", 1)
             .put("messages", JSONArray().put(JSONObject().put("role", "user").put("content", "Reply OK")))

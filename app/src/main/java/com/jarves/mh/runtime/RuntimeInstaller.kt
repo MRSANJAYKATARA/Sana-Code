@@ -628,6 +628,67 @@ class RuntimeInstaller(private val context: Context) {
         )
     }
 
+    fun startPtyProcess(
+        proot: File,
+        rootfs: File,
+        workspace: File,
+        environment: Map<String, String> = emptyMap(),
+        guestCommand: List<String> = listOf("/bin/bash", "-l"),
+        guestWorkspacePath: String = "/workspace",
+        cols: Int = 80,
+        rows: Int = 24,
+    ): PtyProcess {
+        workspace.mkdirs()
+        File(rootfs, guestWorkspacePath.removePrefix("/")).mkdirs()
+        val bridge = File(context.filesDir, "runtime-bridge").apply { mkdirs() }
+        val sdcard = File("/storage/emulated/0/SanaCode").apply { mkdirs() }
+        val args = buildList {
+            add(proot.absolutePath)
+            add("--link2symlink")
+            add("-0")
+            add("-r")
+            add(rootfs.absolutePath)
+            add("-b")
+            add("/dev")
+            add("-b")
+            add("/proc")
+            add("-b")
+            add("/sys")
+            if (sdcard.exists()) {
+                add("-b")
+                add("${sdcard.absolutePath}:/sdcard")
+            }
+            add("-b")
+            add("${workspace.absolutePath}:$guestWorkspacePath")
+            add("-b")
+            add("${bridge.absolutePath}:/pocket-bridge")
+            add("-w")
+            add(guestWorkspacePath)
+            addAll(guestCommand)
+        }
+        val prootTemp = File(context.cacheDir, "proot-tmp").apply { mkdirs() }
+        return PtyProcess.start(
+            argv = args,
+            environment = buildMap {
+                put("HOME", "/root")
+                put("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
+                put("LANG", "C.UTF-8")
+                put("TERM", "xterm-256color")
+                put("COLORTERM", "truecolor")
+                put("LD_LIBRARY_PATH", context.applicationInfo.nativeLibraryDir)
+                put("PROOT_NO_SECCOMP", "1")
+                put("PROOT_TMP_DIR", prootTemp.absolutePath)
+                put("PROOT_LOADER", File(context.applicationInfo.nativeLibraryDir, "libprootloader.so").absolutePath)
+                put("GLIBC_TUNABLES", "glibc.pthread.rseq=0")
+                putAll(environment)
+            },
+            cwd = context.filesDir.absolutePath,
+            cols = cols,
+            rows = rows,
+        )
+    }
+
+
     fun ensureSettingsAndHooks() {
         val hook = File(rootfs, "opt/pocket/permission-hook.sh")
         hook.parentFile?.mkdirs()
